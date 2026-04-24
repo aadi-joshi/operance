@@ -140,6 +140,64 @@ body {
   color: rgba(255, 255, 255, 0.85);
 }
 
+.report-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 13px;
+}
+
+.report-content th {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  text-align: left;
+}
+
+.report-content td {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.report-content tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.report-content code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #6699ff;
+}
+
+.report-content pre {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.report-content hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 1.5rem 0;
+}
+
+.report-content blockquote {
+  border-left: 3px solid #0052ff;
+  padding-left: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 1rem 0;
+  font-style: italic;
+}
+
 /* Pulse dot animation */
 @keyframes pulseRing {
   0% { transform: scale(0.8); opacity: 1; }
