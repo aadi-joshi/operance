@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #060609;
+  --bg-secondary: #0c0d14;
+  --bg-tertiary: #13141e;
+  --blue: #0052ff;
+  --blue-light: #3375ff;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  background-color: #060609;
+  color: #ffffff;
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #060609;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 82, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Typography utilities */
+.font-mono {
+  font-family: var(--font-geist-mono), JetBrains Mono, monospace;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #3375ff 0%, #0052ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Blue glow effect */
+.blue-glow {
+  box-shadow: 0 0 30px rgba(0, 82, 255, 0.2), 0 0 60px rgba(0, 82, 255, 0.1);
+}
+
+/* Step connector line */
+.step-line {
+  position: relative;
+}
+
+.step-line::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 28px;
+  bottom: -4px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Markdown prose styles for reports */
+.report-content h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 1.2rem 0 0.5rem;
+}
+
+.report-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 1rem 0 0.4rem;
+}
+
+.report-content p {
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.7;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.report-content ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+}
+
+.report-content li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+.report-content strong {
+  color: #ffffff;
+}
+
+.report-content em {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Pulse dot animation */
+@keyframes pulseRing {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.live-dot::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulseRing 1.5s ease-out infinite;
+  opacity: 0.5;
+}
+
+/* Shine animation for cards on hover */
+@keyframes shine {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}

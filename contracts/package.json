@@ -1,0 +1,20 @@
+{
+  "name": "operance-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network base-sepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network base",
+    "seed": "hardhat run scripts/seed.ts --network base-sepolia",
+    "verify": "hardhat verify --network base-sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "dotenv": "^16.3.0",
+    "@types/node": "^20.0.0"
+  }
+}
