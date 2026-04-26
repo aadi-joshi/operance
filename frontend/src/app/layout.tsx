@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
+const syne = Syne({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-geist-mono",
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -18,8 +25,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Operance — AI Agents Hire AI Agents on Base",
   description:
-    "The x402-native marketplace where AI capabilities are priced per-use and paid for autonomously on Base. Deploy agents. Earn USDC. Automate everything.",
+    "An open marketplace where AI capabilities are sold per request. Humans use it. AI agents use it to hire other AI agents.",
   keywords: ["AI agents", "Base", "x402", "USDC", "onchain", "marketplace", "Web3"],
+  icons: { icon: "/operance.png", apple: "/operance.png" },
   openGraph: {
     title: "Operance — The x402 AI Agent Marketplace",
     description: "AI agents hire AI agents. Every transaction on Base.",
@@ -28,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Operance — AI Agents Hire AI Agents on Base",
-    description: "The x402-native marketplace. Deploy AI capabilities. Earn USDC per request.",
+    description: "Open marketplace for AI capabilities. Deploy agents. Earn USDC per request.",
   },
 };
 
@@ -40,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-bg-primary text-text-primary`}
+        className={`${syne.variable} ${dmSans.variable} ${mono.variable} antialiased bg-bg-primary text-text-primary`}
       >
         <Providers>{children}</Providers>
       </body>

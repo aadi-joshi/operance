@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Zap, ArrowRight, ExternalLink, CheckCircle2, Loader2,
-  AlertCircle, ChevronDown, ChevronUp, Copy, Check
+  ArrowRight, ExternalLink, CheckCircle2, Loader2,
+  AlertCircle, ChevronDown, ChevronUp, Copy, Check,
+  Award, Database, Shield, FileText,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { streamOrchestrator, truncateHash, truncateAddress } from "@/lib/api";
@@ -47,16 +48,20 @@ interface CompletedResult {
   basescanUrls: string[];
 }
 
-const AGENT_META = [
-  { icon: "🔍", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
-  { icon: "🛡️", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
-  { icon: "📝", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)" },
-  { icon: "🔒", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
-  { icon: "📊", color: "#10b981", bg: "rgba(16,185,129,0.12)" },
+import type { LucideIcon } from "lucide-react";
+import { BarChart3, Code2 } from "lucide-react";
+
+const AGENT_META: { Icon: LucideIcon; color: string; bg: string }[] = [
+  { Icon: Database, color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  { Icon: Shield, color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  { Icon: FileText, color: "#8b5cf6", bg: "rgba(139,92,246,0.12)" },
+  { Icon: Code2, color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+  { Icon: BarChart3, color: "#10b981", bg: "rgba(16,185,129,0.12)" },
 ];
 
 function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
   const meta = AGENT_META[step.agentId ?? 0] || AGENT_META[0];
+  const { Icon: AgentIcon } = meta;
 
   const icon = () => {
     if (step.status === "active") return <Loader2 size={14} className="animate-spin text-blue" />;
@@ -81,10 +86,11 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
         <div className="flex items-center gap-2 flex-wrap">
           {step.agentName && (
             <span
-              className="text-[12px] font-semibold px-2 py-0.5 rounded-md"
+              className="text-[12px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1.5"
               style={{ background: meta.bg, color: meta.color }}
             >
-              {meta.icon} {step.agentName}
+              <AgentIcon size={11} />
+              {step.agentName}
             </span>
           )}
           <span
@@ -105,7 +111,7 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
             className="mt-2 flex items-center gap-3 text-[11px] font-mono"
           >
             {step.amount && (
-              <span className="text-green font-semibold">{step.amount}</span>
+              <span className="text-green font-semibold tabular-nums">{step.amount}</span>
             )}
             <a
               href={step.basescanUrl}
@@ -116,7 +122,9 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
               {truncateHash(step.txHash)}
               <ExternalLink size={10} />
             </a>
-            <span className="text-green text-[10px]">confirmed ✓</span>
+            <span className="text-green text-[10px] flex items-center gap-1">
+              <CheckCircle2 size={10} /> confirmed
+            </span>
           </motion.div>
         )}
 
@@ -322,7 +330,7 @@ export default function OrchestratePage() {
         >
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-blue rounded-xl flex items-center justify-center">
-              <Zap size={16} className="text-white" fill="white" />
+              <ArrowRight size={16} className="text-white" />
             </div>
             <span className="text-[11px] font-semibold text-blue uppercase tracking-[0.15em]">
               Orchestrator
@@ -333,7 +341,7 @@ export default function OrchestratePage() {
           </h1>
           <p className="text-text-secondary text-[15px] max-w-2xl leading-relaxed">
             Submit any complex task. The Orchestrator decomposes it, discovers specialized agents
-            in the marketplace, pays each autonomously via x402 on Base, and assembles your result.
+            in the marketplace, pays each via x402 on Base, and assembles your result.
           </p>
         </motion.div>
 
@@ -371,7 +379,7 @@ export default function OrchestratePage() {
                 />
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-subtle">
                   <span className="text-[11px] text-text-muted">
-                    {status === "idle" ? "⌘+Enter to run" : "Running..."}
+                    {status === "idle" ? "Cmd+Enter to run" : "Running..."}
                   </span>
                   <div className="flex gap-2">
                     {status === "running" && (
@@ -407,7 +415,6 @@ export default function OrchestratePage() {
                         </>
                       ) : (
                         <>
-                          <Zap size={13} fill={task.trim() ? "white" : "currentColor"} />
                           Execute
                           <ArrowRight size={13} />
                         </>
@@ -433,7 +440,7 @@ export default function OrchestratePage() {
                     onClick={() => setTask(ex)}
                     className="w-full text-left px-4 py-3 rounded-xl border border-border-subtle bg-bg-secondary hover:border-border-default hover:bg-bg-hover transition-all text-[13px] text-text-secondary leading-relaxed group"
                   >
-                    <span className="text-text-muted mr-2">→</span>
+                    <span className="text-text-muted mr-2">-&gt;</span>
                     {ex}
                   </button>
                 ))}
@@ -463,7 +470,7 @@ export default function OrchestratePage() {
                       </span>
                     </div>
                     {status === "completed" && result && (
-                      <span className="text-[11px] font-mono text-green">
+                      <span className="text-[11px] font-mono text-green tabular-nums">
                         {result.totalCost} · {result.txCount} txs
                       </span>
                     )}
@@ -515,7 +522,7 @@ export default function OrchestratePage() {
                       <span className="text-[11px] text-text-muted uppercase tracking-wider">
                         Onchain Transactions
                       </span>
-                      <span className="text-[11px] text-green font-mono font-semibold">
+                      <span className="text-[11px] text-green font-mono font-semibold tabular-nums">
                         {result.totalCost} total
                       </span>
                     </div>
@@ -545,7 +552,7 @@ export default function OrchestratePage() {
                     >
                       {result.topPick && (
                         <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-green-dim border border-green/20">
-                          <span className="text-green text-xl">🏆</span>
+                          <Award size={20} className="text-green flex-shrink-0" />
                           <div>
                             <div className="text-[10px] text-green/70 uppercase tracking-wider font-medium">Top Pick</div>
                             <div className="text-[14px] font-semibold text-text-primary">{result.topPick}</div>
@@ -577,10 +584,10 @@ export default function OrchestratePage() {
               <p className="text-[11px] text-text-muted uppercase tracking-wider mb-3">Agent Pipeline</p>
               <div className="space-y-3">
                 {[
-                  { id: 0, name: "DataFetcher", price: "$0.008", icon: "🔍", color: "#3b82f6", desc: "Fetches DeFi data" },
-                  { id: 1, name: "RiskAnalyzer", price: "$0.015", icon: "🛡️", color: "#f59e0b", desc: "Risk assessment" },
-                  { id: 2, name: "ReportWriter", price: "$0.010", icon: "📝", color: "#8b5cf6", desc: "Report generation" },
-                ].map((agent, i) => {
+                  { id: 0, name: "DataFetcher", price: "$0.008", Icon: Database, color: "#3b82f6", bg: "rgba(59,130,246,0.12)", desc: "Fetches DeFi data" },
+                  { id: 1, name: "RiskAnalyzer", price: "$0.015", Icon: Shield, color: "#f59e0b", bg: "rgba(245,158,11,0.12)", desc: "Risk assessment" },
+                  { id: 2, name: "ReportWriter", price: "$0.010", Icon: FileText, color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", desc: "Report generation" },
+                ].map((agent) => {
                   const completed = steps.some(
                     (s) => s.agentId === agent.id && s.txHash && s.status === "done"
                   );
@@ -600,15 +607,15 @@ export default function OrchestratePage() {
                       )}
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                        style={{ background: `${agent.color}18` }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: agent.bg }}
                       >
-                        {agent.icon}
+                        <agent.Icon size={16} style={{ color: agent.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-text-primary">{agent.name}</span>
-                          <span className="text-[11px] font-mono text-text-muted">{agent.price}</span>
+                          <span className="text-[11px] font-mono text-text-muted tabular-nums">{agent.price}</span>
                         </div>
                         <span className="text-[11px] text-text-muted">{agent.desc}</span>
                       </div>
@@ -623,7 +630,7 @@ export default function OrchestratePage() {
               </div>
               <div className="mt-3 pt-3 border-t border-border-subtle flex items-center justify-between">
                 <span className="text-[11px] text-text-muted">Total cost</span>
-                <span className="text-[13px] font-mono font-semibold text-text-primary">$0.033 USDC</span>
+                <span className="text-[13px] font-mono font-semibold text-text-primary tabular-nums">$0.033 USDC</span>
               </div>
             </motion.div>
 
@@ -637,19 +644,19 @@ export default function OrchestratePage() {
               <p className="text-[11px] text-text-muted uppercase tracking-wider mb-3">x402 Protocol</p>
               <div className="space-y-2.5 text-[12px]">
                 <div className="flex items-start gap-2">
-                  <span className="text-blue mt-0.5">→</span>
+                  <span className="text-blue mt-0.5">-&gt;</span>
                   <span className="text-text-secondary">Each agent call returns HTTP 402 requiring USDC payment</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-blue mt-0.5">→</span>
-                  <span className="text-text-secondary">Orchestrator pays autonomously from its Base wallet</span>
+                  <span className="text-blue mt-0.5">-&gt;</span>
+                  <span className="text-text-secondary">Orchestrator pays from its Base wallet</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-blue mt-0.5">→</span>
+                  <span className="text-blue mt-0.5">-&gt;</span>
                   <span className="text-text-secondary">Every payment is an onchain USDC transfer on Base</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-blue mt-0.5">→</span>
+                  <span className="text-blue mt-0.5">-&gt;</span>
                   <span className="text-text-secondary">Payment verified by parsing ERC-20 Transfer event</span>
                 </div>
               </div>
@@ -659,7 +666,7 @@ export default function OrchestratePage() {
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center gap-1 text-[11px] text-blue hover:text-blue-light transition-colors"
               >
-                x402.org — open standard
+                x402.org -- open standard
                 <ExternalLink size={10} />
               </a>
             </motion.div>
@@ -691,7 +698,7 @@ export default function OrchestratePage() {
                   Basescan <ExternalLink size={9} />
                 </a>
               </div>
-              <div className="mt-3 text-[11px] text-text-muted space-y-1 font-mono">
+              <div className="mt-3 text-[11px] text-text-muted space-y-1 font-mono tabular-nums">
                 <div>USDC: 0x036C...F7e</div>
                 <div>Settlement: ~2s per tx</div>
                 <div>Gas: ~$0.0001/tx</div>

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
-import { Zap } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/", label: "Marketplace" },
@@ -19,10 +19,14 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 bg-blue rounded-lg flex items-center justify-center shadow-blue-glow group-hover:shadow-blue-glow transition-all">
-            <Zap size={14} className="text-white" fill="white" />
-          </div>
-          <span className="font-semibold text-[15px] tracking-tight text-text-primary">
+          <Image
+            src="/operance.png"
+            alt="Operance"
+            width={28}
+            height={28}
+            className="rounded-md"
+          />
+          <span className="font-semibold text-[15px] tracking-tight text-text-primary font-display">
             Operance
           </span>
         </Link>
@@ -34,10 +38,10 @@ export function Navbar() {
               key={href}
               href={href}
               className={clsx(
-                "px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all",
+                "px-3.5 py-1.5 text-[13px] font-medium transition-all",
                 pathname === href
-                  ? "bg-blue/15 text-blue-light border border-blue/25"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+                  ? "text-text-primary border-b-2 border-blue pb-[4px]"
+                  : "text-text-secondary hover:text-text-primary rounded-lg hover:bg-bg-tertiary"
               )}
             >
               {label}

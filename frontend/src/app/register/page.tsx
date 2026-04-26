@@ -3,18 +3,28 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
-import { CheckCircle2, AlertCircle, Loader2, ExternalLink, Info } from "lucide-react";
+import {
+  CheckCircle2, AlertCircle, Loader2, ExternalLink, Info,
+  Database, Shield, FileText, Code2, BarChart3, Globe, Image, Cpu,
+  type LucideIcon,
+} from "lucide-react";
 import { clsx } from "clsx";
 
-const CAPABILITIES = [
-  { value: "data_fetching", label: "Data Fetching", icon: "🔍" },
-  { value: "risk_analysis", label: "Risk Analysis", icon: "🛡️" },
-  { value: "report_writing", label: "Report Writing", icon: "📝" },
-  { value: "code_review", label: "Code Review", icon: "🔒" },
-  { value: "sentiment_analysis", label: "Sentiment Analysis", icon: "📊" },
-  { value: "translation", label: "Translation", icon: "🌐" },
-  { value: "image_generation", label: "Image Generation", icon: "🎨" },
-  { value: "other", label: "Other", icon: "🤖" },
+interface Capability {
+  value: string;
+  label: string;
+  Icon: LucideIcon;
+}
+
+const CAPABILITIES: Capability[] = [
+  { value: "data_fetching", label: "Data Fetching", Icon: Database },
+  { value: "risk_analysis", label: "Risk Analysis", Icon: Shield },
+  { value: "report_writing", label: "Report Writing", Icon: FileText },
+  { value: "code_review", label: "Code Review", Icon: Code2 },
+  { value: "sentiment_analysis", label: "Sentiment Analysis", Icon: BarChart3 },
+  { value: "translation", label: "Translation", Icon: Globe },
+  { value: "image_generation", label: "Image Generation", Icon: Image },
+  { value: "other", label: "Other", Icon: Cpu },
 ];
 
 const PRICE_PRESETS = [
@@ -49,7 +59,6 @@ export default function RegisterPage() {
 
     const price = priceMode === "custom" ? form.customPrice : priceMode;
 
-    // For now, register via the API (which would write to local DB and optionally onchain)
     const RAW = process.env.NEXT_PUBLIC_BACKEND_URL;
     const BACKEND = RAW && RAW.startsWith("http") ? RAW : "/backend";
 
@@ -108,7 +117,7 @@ export default function RegisterPage() {
             className="rounded-xl border border-green/30 bg-green-dim p-8 text-center"
           >
             <CheckCircle2 size={48} className="text-green mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-text-primary mb-2">Agent Registered!</h2>
+            <h2 className="text-2xl font-bold text-text-primary mb-2">Agent Registered</h2>
             <p className="text-text-secondary mb-6">
               Your agent <strong className="text-text-primary">{form.name}</strong> has been added
               to the Operance marketplace.
@@ -206,7 +215,10 @@ export default function RegisterPage() {
                         : "border-border-subtle bg-bg-secondary text-text-muted hover:border-border-default"
                     )}
                   >
-                    <span className="text-xl">{cap.icon}</span>
+                    <cap.Icon
+                      size={18}
+                      className={form.capability === cap.value ? "text-blue-light" : "text-text-muted"}
+                    />
                     <span className="text-[10px] font-medium leading-tight">{cap.label}</span>
                   </button>
                 ))}
@@ -215,7 +227,7 @@ export default function RegisterPage() {
 
             {/* Endpoint & Pricing */}
             <div className="rounded-xl border border-border-default bg-bg-card p-5 space-y-4">
-              <h3 className="text-[13px] font-semibold text-text-primary">Endpoint & Pricing</h3>
+              <h3 className="text-[13px] font-semibold text-text-primary">Endpoint &amp; Pricing</h3>
 
               <div>
                 <label className="block text-[12px] text-text-secondary mb-1.5">API Endpoint URL *</label>
@@ -292,7 +304,7 @@ export default function RegisterPage() {
                   Registering...
                 </>
               ) : (
-                "Register Agent →"
+                "Register Agent"
               )}
             </button>
           </motion.form>

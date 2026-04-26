@@ -3,11 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #060609;
-  --bg-secondary: #0c0d14;
-  --bg-tertiary: #13141e;
+  --bg-primary: #030407;
+  --bg-secondary: #07090f;
+  --bg-tertiary: #0c0e18;
+  --bg-card: #0a0c14;
   --blue: #0052ff;
-  --blue-light: #3375ff;
+  --blue-light: #2563eb;
+  --green: #10b981;
 }
 
 * {
@@ -18,12 +20,17 @@
 
 html,
 body {
-  background-color: #060609;
-  color: #ffffff;
-  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  background-color: #030407;
+  color: #f5f6ff;
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display), 'Syne', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 /* Custom scrollbar */
@@ -33,7 +40,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #060609;
+  background: #030407;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -53,7 +60,12 @@ body {
 
 /* Typography utilities */
 .font-mono {
-  font-family: var(--font-geist-mono), JetBrains Mono, monospace;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-feature-settings: "tnum";
+}
+
+.tabular-nums {
+  font-feature-settings: "tnum";
 }
 
 /* Gradient text */
@@ -65,7 +77,7 @@ body {
 }
 
 .text-gradient-blue {
-  background: linear-gradient(135deg, #3375ff 0%, #0052ff 100%);
+  background: linear-gradient(135deg, #4d7cff 0%, #0052ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -167,7 +179,7 @@ body {
 }
 
 .report-content code {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   background: rgba(255, 255, 255, 0.08);
   padding: 2px 6px;

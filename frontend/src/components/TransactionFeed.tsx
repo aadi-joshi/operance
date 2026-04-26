@@ -42,6 +42,8 @@ const DEMO_TXS: Transaction[] = [
   },
 ];
 
+const AGENT_CAPABILITY_KEYS = ["data_fetching", "risk_analysis", "report_writing", "code_review", "sentiment_analysis"];
+
 interface TransactionFeedProps {
   newTxs?: Transaction[];
 }
@@ -99,9 +101,8 @@ export function TransactionFeed({ newTxs = [] }: TransactionFeedProps) {
       <div className="divide-y divide-border-subtle">
         <AnimatePresence>
           {txs.slice(0, 8).map((tx, i) => {
-            const meta = CAPABILITY_META[
-              ["data_fetching", "risk_analysis", "report_writing", "code_review", "sentiment_analysis"][tx.agentId] || "data_fetching"
-            ] || { icon: "🤖", color: "#0052ff" };
+            const capKey = AGENT_CAPABILITY_KEYS[tx.agentId] || "data_fetching";
+            const meta = CAPABILITY_META[capKey] || { color: "#0052ff" };
 
             return (
               <motion.a
@@ -115,15 +116,18 @@ export function TransactionFeed({ newTxs = [] }: TransactionFeedProps) {
                 className="flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors group"
               >
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ background: `${meta.color}18` }}
                 >
-                  {meta.icon}
+                  <div
+                    className="w-2.5 h-2.5 rounded-sm"
+                    style={{ background: meta.color }}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-medium text-text-primary">{tx.agentName}</span>
-                    <span className="text-[11px] font-semibold text-green">
+                    <span className="text-[11px] font-semibold text-green tabular-nums font-mono">
                       ${parseFloat(tx.amountUsdc).toFixed(4)} USDC
                     </span>
                   </div>

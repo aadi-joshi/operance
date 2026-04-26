@@ -76,10 +76,10 @@ export interface OrchestratorStep {
   timestamp: number;
 }
 
-export const CAPABILITY_META: Record<string, { icon: string; color: string; label: string }> = {
-  data_fetching: { icon: "🔍", color: "#3b82f6", label: "Data" },
-  risk_analysis: { icon: "🛡️", color: "#f59e0b", label: "Risk" },
-  report_writing: { icon: "📝", color: "#8b5cf6", label: "Reports" },
-  code_review: { icon: "🔒", color: "#ef4444", label: "Security" },
-  sentiment_analysis: { icon: "📊", color: "#10b981", label: "Sentiment" },
+export const CAPABILITY_META: Record<string, { color: string; label: string }> = {
+  data_fetching: { color: "#3b82f6", label: "Data" },
+  risk_analysis: { color: "#f59e0b", label: "Risk" },
+  report_writing: { color: "#8b5cf6", label: "Reports" },
+  code_review: { color: "#ef4444", label: "Security" },
+  sentiment_analysis: { color: "#10b981", label: "Sentiment" },
 };

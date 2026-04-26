@@ -79,7 +79,7 @@ export function StatsBar() {
               {item.href ? (
                 <a href={item.href} target="_blank" rel="noopener noreferrer" className="block group">
                   <div className="flex items-center gap-1">
-                    <span className="text-[18px] font-bold text-text-primary font-mono leading-tight">
+                    <span className="text-[18px] font-bold text-text-primary font-mono tabular-nums leading-tight">
                       {item.value}
                     </span>
                     <ExternalLink size={10} className="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -90,7 +90,7 @@ export function StatsBar() {
                 </a>
               ) : (
                 <>
-                  <div className="text-[18px] font-bold text-text-primary font-mono leading-tight">
+                  <div className="text-[18px] font-bold text-text-primary font-mono tabular-nums leading-tight">
                     {item.value}
                   </div>
                   <div className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
