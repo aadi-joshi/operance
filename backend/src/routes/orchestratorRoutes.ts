@@ -8,7 +8,7 @@ const router = Router();
 
 // SSE endpoint — main orchestrator execution
 router.post("/execute", async (req: Request, res: Response) => {
-  const { task } = req.body;
+  const { task, userTxHash } = req.body;
 
   if (!task || typeof task !== "string" || task.trim().length < 5) {
     return res.status(400).json({ error: "Task must be at least 5 characters." });
@@ -31,7 +31,7 @@ router.post("/execute", async (req: Request, res: Response) => {
   });
 
   try {
-    await executeOrchestrator(task.trim(), res);
+    await executeOrchestrator(task.trim(), res, userTxHash);
   } catch (e: any) {
     res.write(`data: ${JSON.stringify({ type: "error", message: e.message })}\n\n`);
   } finally {

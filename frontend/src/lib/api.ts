@@ -37,14 +37,15 @@ export function streamOrchestrator(
   task: string,
   onEvent: (event: any) => void,
   onDone: () => void,
-  onError: (err: string) => void
+  onError: (err: string) => void,
+  userTxHash?: string
 ): AbortController {
   const controller = new AbortController();
 
   fetch(`${BASE}/api/orchestrator/execute`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ task }),
+    body: JSON.stringify({ task, userTxHash }),
     signal: controller.signal,
   })
     .then(async (res) => {

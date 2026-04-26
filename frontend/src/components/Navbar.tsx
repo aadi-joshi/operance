@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
+import { WalletButton } from "./WalletButton";
 
 const NAV_LINKS = [
   { href: "/", label: "Marketplace" },
@@ -49,7 +50,7 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Network Badge */}
+        {/* Right side: network badge + wallet */}
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-tertiary border border-border-subtle">
             <div className="relative w-1.5 h-1.5">
@@ -60,14 +61,7 @@ export function Navbar() {
               {process.env.NEXT_PUBLIC_NETWORK === "base" ? "Base Mainnet" : "Base Sepolia"}
             </span>
           </div>
-          <a
-            href="https://github.com/aadi-joshi/operance"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[12px] text-text-muted hover:text-text-secondary transition-colors"
-          >
-            GitHub
-          </a>
+          <WalletButton />
         </div>
       </div>
     </nav>

@@ -7,6 +7,7 @@ import {
   getAgentAccount,
   transferUsdc,
   getUsdcBalance,
+  verifyUsdcTransfer,
 } from "./walletService";
 import { dataFetcherAgent } from "../agents/dataFetcher";
 import { riskAnalyzerAgent } from "../agents/riskAnalyzer";
@@ -118,7 +119,7 @@ Return ONLY this JSON with all 3 agents:
   });
 }
 
-export async function executeOrchestrator(task: string, res: Response): Promise<void> {
+export async function executeOrchestrator(task: string, res: Response, userTxHash?: string): Promise<void> {
   const runId = uuidv4();
   const txHashes: string[] = [];
   let totalCostUsdc = 0n;
@@ -139,6 +140,30 @@ export async function executeOrchestrator(task: string, res: Response): Promise<
     task,
     orchestratorWallet: orchestratorAccount.address,
   });
+
+  // Verify user payment if provided
+  if (userTxHash) {
+    sendEvent(res, { type: "user_payment_verifying", txHash: userTxHash });
+    const verification = await verifyUsdcTransfer(
+      userTxHash as `0x${string}`,
+      orchestratorAccount.address as `0x${string}`,
+      30000n // accept >= $0.030 to allow for minor rounding
+    );
+    if (!verification.valid) {
+      sendEvent(res, {
+        type: "error",
+        message: "Payment verification failed. Please try again.",
+      });
+      return;
+    }
+    sendEvent(res, {
+      type: "user_payment_verified",
+      txHash: userTxHash,
+      basescanUrl: `${EXPLORER_URL}/tx/${userTxHash}`,
+      from: verification.from,
+      amount: `$${(Number(verification.amount) / 1_000_000).toFixed(4)} USDC`,
+    });
+  }
 
   // Step 1: Decompose task
   sendEvent(res, { type: "thinking", message: "Analyzing task and selecting agents..." });

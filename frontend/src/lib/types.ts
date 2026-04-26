@@ -46,7 +46,9 @@ export type OrchestratorEventType =
   | "assembling"
   | "completed"
   | "error"
-  | "done";
+  | "done"
+  | "user_payment_verifying"
+  | "user_payment_verified";
 
 export interface SubTaskInfo {
   agentId: number;

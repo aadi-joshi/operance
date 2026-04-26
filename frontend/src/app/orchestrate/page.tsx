@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, ExternalLink, CheckCircle2, Loader2,
   AlertCircle, ChevronDown, ChevronUp, Copy, Check,
-  Award, Database, Shield, FileText,
+  Award, Database, Shield, FileText, Wallet, Zap,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { streamOrchestrator, truncateHash, truncateAddress } from "@/lib/api";
@@ -13,6 +13,9 @@ import { OrchestratorEvent, SubTaskInfo } from "@/lib/types";
 import { clsx } from "clsx";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
+import { erc20Abi, formatUnits } from "viem";
+import { baseSepolia, base } from "viem/chains";
 
 const EXAMPLE_TASKS = [
   "Research the top 3 DeFi protocols by TVL, analyze their risk profiles, and recommend the best option for a risk-averse investor.",
@@ -21,7 +24,20 @@ const EXAMPLE_TASKS = [
   "Compare the risk and return profile of the 3 largest DEXs by trading volume.",
 ];
 
+const USDC_ADDRESSES: Record<number, `0x${string}`> = {
+  [baseSepolia.id]: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  [base.id]: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+};
+
+const TASK_COST = 33000n; // $0.033 in USDC 6 decimals
+const ORCHESTRATOR_ADDRESS = (
+  process.env.NEXT_PUBLIC_ORCHESTRATOR_ADDRESS ||
+  "0xDDB7B29F0128fe45E8Ef571e7F85E1588bf7c221"
+) as `0x${string}`;
+
 type ExecutionStatus = "idle" | "running" | "completed" | "error";
+type PaymentMode = "shared" | "wallet";
+type WalletPayStatus = "idle" | "signing" | "confirming" | "done" | "failed";
 
 interface Step {
   id: string;
@@ -76,12 +92,10 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
       animate={{ opacity: 1, x: 0 }}
       className={clsx("relative flex gap-3 pb-5", !isLast && "step-line")}
     >
-      {/* Icon */}
       <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-bg-secondary border border-border-subtle mt-0.5">
         {icon()}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex items-center gap-2 flex-wrap">
           {step.agentName && (
@@ -103,7 +117,6 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
           </span>
         </div>
 
-        {/* Payment info */}
         {step.txHash && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
@@ -128,7 +141,6 @@ function StepItem({ step, isLast }: { step: Step; isLast: boolean }) {
           </motion.div>
         )}
 
-        {/* Agent response preview */}
         {step.preview && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -166,13 +178,42 @@ export default function OrchestratePage() {
   const [result, setResult] = useState<CompletedResult | null>(null);
   const [subtasks, setSubtasks] = useState<SubTaskInfo[]>([]);
   const [showReport, setShowReport] = useState(true);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("shared");
+  const [walletPayStatus, setWalletPayStatus] = useState<WalletPayStatus>("idle");
   const abortRef = useRef<AbortController | null>(null);
   const stepsEndRef = useRef<HTMLDivElement>(null);
   const stepCountRef = useRef(0);
 
+  // Wallet hooks
+  const { address, isConnected, chain } = useAccount();
+  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
+
+  const usdcAddress = chain?.id ? USDC_ADDRESSES[chain.id] : USDC_ADDRESSES[baseSepolia.id];
+
+  const { data: rawBalance } = useReadContract({
+    address: usdcAddress,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!usdcAddress },
+  });
+
+  const usdcBalance = rawBalance !== undefined
+    ? parseFloat(formatUnits(rawBalance as bigint, 6))
+    : 0;
+  const hasEnoughUsdc = usdcBalance >= 0.033;
+
   useEffect(() => {
     stepsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [steps]);
+
+  // Reset payment mode if wallet disconnects
+  useEffect(() => {
+    if (!isConnected && paymentMode === "wallet") {
+      setPaymentMode("shared");
+    }
+  }, [isConnected, paymentMode]);
 
   const addStep = useCallback((step: Partial<Step> & { type: string; message: string }) => {
     const id = `step-${stepCountRef.current++}`;
@@ -255,6 +296,24 @@ export default function OrchestratePage() {
         addStep({ type: "assembling", message: event.message, status: "active" });
         break;
 
+      case "user_payment_verifying":
+        addStep({
+          type: "user_payment_verifying",
+          message: "Verifying your payment on Base...",
+          status: "active",
+        });
+        break;
+
+      case "user_payment_verified":
+        updateLastStep({
+          message: "Your payment verified",
+          status: "done",
+          txHash: event.txHash,
+          basescanUrl: event.basescanUrl,
+          amount: event.amount,
+        });
+        break;
+
       case "completed":
         updateLastStep({ status: "done" });
         addStep({
@@ -282,9 +341,7 @@ export default function OrchestratePage() {
     }
   }, [addStep, updateLastStep]);
 
-  const execute = useCallback(() => {
-    if (!task.trim() || status === "running") return;
-
+  const startStream = useCallback((taskText: string, userTxHash?: string) => {
     setStatus("running");
     setSteps([]);
     setResult(null);
@@ -292,17 +349,67 @@ export default function OrchestratePage() {
     stepCountRef.current = 0;
 
     abortRef.current = streamOrchestrator(
-      task.trim(),
+      taskText,
       handleEvent,
-      () => {
-        setStatus((prev) => prev === "running" ? "completed" : prev);
-      },
+      () => setStatus((prev) => prev === "running" ? "completed" : prev),
       (err) => {
         addStep({ type: "error", message: err, status: "error" });
         setStatus("error");
-      }
+      },
+      userTxHash,
     );
-  }, [task, status, handleEvent, addStep]);
+  }, [handleEvent, addStep]);
+
+  const execute = useCallback(() => {
+    if (!task.trim() || status === "running") return;
+    startStream(task.trim());
+  }, [task, status, startStream]);
+
+  const executeWithWallet = useCallback(async () => {
+    if (!task.trim() || status === "running" || !address || !publicClient) return;
+
+    setWalletPayStatus("signing");
+
+    try {
+      const txHash = await writeContractAsync({
+        address: usdcAddress,
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [ORCHESTRATOR_ADDRESS, TASK_COST],
+        chain,
+        account: address,
+      } as any);
+
+      setWalletPayStatus("confirming");
+
+      await publicClient.waitForTransactionReceipt({ hash: txHash, confirmations: 1 });
+
+      setWalletPayStatus("done");
+      startStream(task.trim(), txHash);
+    } catch (err: any) {
+      setWalletPayStatus("failed");
+      const isRejected = err?.code === 4001 ||
+        err?.message?.toLowerCase().includes("rejected") ||
+        err?.message?.toLowerCase().includes("denied");
+      if (!isRejected) {
+        addStep({
+          type: "error",
+          message: "Payment failed: " + (err?.shortMessage || err?.message || "Unknown error"),
+          status: "error",
+        });
+        setStatus("error");
+      }
+      setTimeout(() => setWalletPayStatus("idle"), 2000);
+    }
+  }, [task, status, address, usdcAddress, writeContractAsync, publicClient, startStream, addStep]);
+
+  const handleExecute = useCallback(() => {
+    if (paymentMode === "wallet" && isConnected) {
+      executeWithWallet();
+    } else {
+      execute();
+    }
+  }, [paymentMode, isConnected, executeWithWallet, execute]);
 
   const cancel = () => {
     abortRef.current?.abort();
@@ -315,7 +422,11 @@ export default function OrchestratePage() {
     setResult(null);
     setSubtasks([]);
     setTask("");
+    setWalletPayStatus("idle");
   };
+
+  const isWalletExecuting = walletPayStatus === "signing" || walletPayStatus === "confirming";
+  const executeButtonDisabled = !task.trim() || status === "running" || isWalletExecuting;
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -368,18 +479,24 @@ export default function OrchestratePage() {
                   value={task}
                   onChange={(e) => setTask(e.target.value)}
                   placeholder="Describe any complex research or analysis task..."
-                  disabled={status === "running"}
+                  disabled={status === "running" || isWalletExecuting}
                   className={clsx(
                     "w-full bg-transparent text-[14px] text-text-primary placeholder:text-text-muted resize-none outline-none leading-relaxed",
                     "min-h-[100px] font-sans"
                   )}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) execute();
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleExecute();
                   }}
                 />
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-subtle">
                   <span className="text-[11px] text-text-muted">
-                    {status === "idle" ? "Cmd+Enter to run" : "Running..."}
+                    {isWalletExecuting
+                      ? walletPayStatus === "signing"
+                        ? "Waiting for wallet signature..."
+                        : "Confirming on Base..."
+                      : status === "running"
+                      ? "Running..."
+                      : "Cmd+Enter to run"}
                   </span>
                   <div className="flex gap-2">
                     {status === "running" && (
@@ -399,19 +516,29 @@ export default function OrchestratePage() {
                       </button>
                     )}
                     <button
-                      onClick={execute}
-                      disabled={!task.trim() || status === "running"}
+                      onClick={handleExecute}
+                      disabled={executeButtonDisabled}
                       className={clsx(
                         "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all",
-                        task.trim() && status !== "running"
+                        !executeButtonDisabled
                           ? "bg-blue text-white hover:bg-blue-light shadow-blue-glow"
                           : "bg-bg-tertiary text-text-muted cursor-not-allowed"
                       )}
                     >
-                      {status === "running" ? (
+                      {isWalletExecuting ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          {walletPayStatus === "signing" ? "Confirm in wallet" : "Confirming..."}
+                        </>
+                      ) : status === "running" ? (
                         <>
                           <Loader2 size={13} className="animate-spin" />
                           Executing
+                        </>
+                      ) : paymentMode === "wallet" ? (
+                        <>
+                          <Wallet size={13} />
+                          Pay &amp; Execute
                         </>
                       ) : (
                         <>
@@ -426,7 +553,7 @@ export default function OrchestratePage() {
             </motion.div>
 
             {/* Example tasks */}
-            {status === "idle" && !steps.length && (
+            {status === "idle" && !steps.length && !isWalletExecuting && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -446,6 +573,30 @@ export default function OrchestratePage() {
                 ))}
               </motion.div>
             )}
+
+            {/* Wallet pay loading state */}
+            <AnimatePresence>
+              {isWalletExecuting && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="rounded-xl border border-blue/30 bg-blue-dim p-4 flex items-center gap-3"
+                >
+                  <Loader2 size={16} className="animate-spin text-blue flex-shrink-0" />
+                  <div>
+                    <div className="text-[13px] font-medium text-text-primary">
+                      {walletPayStatus === "signing"
+                        ? "Approve the transaction in your wallet"
+                        : "Waiting for Base confirmation..."}
+                    </div>
+                    <div className="text-[11px] text-text-muted mt-0.5">
+                      Sending $0.033 USDC to orchestrator
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Execution steps */}
             <AnimatePresence>
@@ -493,7 +644,6 @@ export default function OrchestratePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-xl border border-border-default bg-bg-card overflow-hidden"
                 >
-                  {/* Report header */}
                   <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 size={14} className="text-green" />
@@ -574,6 +724,67 @@ export default function OrchestratePage() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Payment Method - only show when wallet connected and idle */}
+            <AnimatePresence>
+              {isConnected && (status === "idle" || status === "error") && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="rounded-xl border border-border-default bg-bg-card p-4"
+                >
+                  <p className="text-[11px] text-text-muted uppercase tracking-wider mb-3">Payment Method</p>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setPaymentMode("shared")}
+                      className={clsx(
+                        "w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all",
+                        paymentMode === "shared"
+                          ? "border-blue/30 bg-blue-dim"
+                          : "border-border-subtle bg-bg-secondary hover:border-border-default"
+                      )}
+                    >
+                      <div>
+                        <div className="text-[12px] font-medium text-text-primary">Shared pool</div>
+                        <div className="text-[11px] text-text-muted">Demo orchestrator funds</div>
+                      </div>
+                      <span className="text-[11px] text-green font-mono font-semibold">Free</span>
+                    </button>
+
+                    <button
+                      onClick={() => hasEnoughUsdc && setPaymentMode("wallet")}
+                      className={clsx(
+                        "w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all",
+                        paymentMode === "wallet"
+                          ? "border-blue/30 bg-blue-dim"
+                          : "border-border-subtle bg-bg-secondary",
+                        hasEnoughUsdc
+                          ? "hover:border-border-default cursor-pointer"
+                          : "opacity-40 cursor-not-allowed"
+                      )}
+                    >
+                      <div>
+                        <div className="text-[12px] font-medium text-text-primary flex items-center gap-1.5">
+                          <Wallet size={12} className="text-blue" />
+                          Your wallet
+                        </div>
+                        <div className="text-[11px] text-text-muted font-mono tabular-nums">
+                          {usdcBalance.toFixed(2)} USDC available
+                          {!hasEnoughUsdc && " (need $0.033)"}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-text-primary font-mono tabular-nums">$0.033</span>
+                    </button>
+                  </div>
+                  {paymentMode === "wallet" && (
+                    <p className="text-[10px] text-text-muted mt-2 leading-relaxed">
+                      $0.033 USDC transfers from your wallet to the orchestrator before execution begins.
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Agent pipeline */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
