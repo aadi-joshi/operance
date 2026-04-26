@@ -50,7 +50,8 @@ export default function RegisterPage() {
     const price = priceMode === "custom" ? form.customPrice : priceMode;
 
     // For now, register via the API (which would write to local DB and optionally onchain)
-    const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+    const RAW = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const BACKEND = RAW && RAW.startsWith("http") ? RAW : "/backend";
 
     try {
       const res = await fetch(`${BACKEND}/api/registry/register`, {
