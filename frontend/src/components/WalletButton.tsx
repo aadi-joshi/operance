@@ -1,7 +1,6 @@
 "use client";
 
 import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from "wagmi";
-import { coinbaseWallet } from "wagmi/connectors";
 import { erc20Abi, formatUnits } from "viem";
 import { baseSepolia, base } from "viem/chains";
 import { useState, useRef, useEffect } from "react";
@@ -23,7 +22,9 @@ export function WalletButton() {
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
   const [open, setOpen] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const usdcAddress = chain?.id ? USDC_ADDRESSES[chain.id] : USDC_ADDRESSES[TARGET_CHAIN_ID];
   const onWrongNetwork = isConnected && chain?.id !== TARGET_CHAIN_ID;
@@ -49,15 +50,43 @@ export function WalletButton() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  useEffect(() => {
+    if (!showPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setShowPicker(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showPicker]);
+
   if (!isConnected) {
     return (
-      <button
-        onClick={() => connect({ connector: connectors[0] })}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-blue/40 bg-blue/10 text-blue hover:bg-blue/20 hover:border-blue/60 transition-all"
-      >
-        <Wallet size={13} />
-        Connect
-      </button>
+      <div className="relative" ref={pickerRef}>
+        <button
+          onClick={() => setShowPicker((v) => !v)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-blue/40 bg-blue/10 text-blue hover:bg-blue/20 hover:border-blue/60 transition-all"
+        >
+          <Wallet size={13} />
+          Connect
+        </button>
+        {showPicker && (
+          <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-border-default bg-bg-card shadow-xl z-50 overflow-hidden p-1.5 space-y-0.5">
+            {connectors.map((connector) => (
+              <button
+                key={connector.id}
+                onClick={() => {
+                  connect({ connector });
+                  setShowPicker(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-all text-left"
+              >
+                <Wallet size={12} className="text-text-muted flex-shrink-0" />
+                {connector.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 

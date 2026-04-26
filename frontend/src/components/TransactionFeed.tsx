@@ -8,40 +8,6 @@ import { Transaction } from "@/lib/types";
 import { truncateHash, truncateAddress, timeAgo } from "@/lib/api";
 import { CAPABILITY_META } from "@/lib/types";
 
-// Demo transactions to show when backend isn't running
-const DEMO_TXS: Transaction[] = [
-  {
-    txHash: "0x3f2ab1cd4e9f87a2bc3d1e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4",
-    agentName: "DataFetcher",
-    agentId: 0,
-    payer: "0x1234567890123456789012345678901234567890",
-    agentWallet: "0xabcdef0123456789012345678901234567890abc",
-    amountUsdc: "0.008000",
-    timestamp: Math.floor(Date.now() / 1000) - 12,
-    basescanUrl: "https://sepolia.basescan.org/tx/0x3f2a",
-  },
-  {
-    txHash: "0x8c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c",
-    agentName: "RiskAnalyzer",
-    agentId: 1,
-    payer: "0x1234567890123456789012345678901234567890",
-    agentWallet: "0xdef0123456789012345678901234567890abcdef",
-    amountUsdc: "0.015000",
-    timestamp: Math.floor(Date.now() / 1000) - 48,
-    basescanUrl: "https://sepolia.basescan.org/tx/0x8c1d",
-  },
-  {
-    txHash: "0xa9f3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2",
-    agentName: "ReportWriter",
-    agentId: 2,
-    payer: "0x1234567890123456789012345678901234567890",
-    agentWallet: "0x0123456789012345678901234567890abcdef012",
-    amountUsdc: "0.010000",
-    timestamp: Math.floor(Date.now() / 1000) - 120,
-    basescanUrl: "https://sepolia.basescan.org/tx/0xa9f3",
-  },
-];
-
 const AGENT_CAPABILITY_KEYS = ["data_fetching", "risk_analysis", "report_writing", "code_review", "sentiment_analysis"];
 
 interface TransactionFeedProps {
@@ -49,7 +15,7 @@ interface TransactionFeedProps {
 }
 
 export function TransactionFeed({ newTxs = [] }: TransactionFeedProps) {
-  const [txs, setTxs] = useState<Transaction[]>(DEMO_TXS);
+  const [txs, setTxs] = useState<Transaction[]>([]);
   const prevNewTxsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -97,6 +63,12 @@ export function TransactionFeed({ newTxs = [] }: TransactionFeedProps) {
         </div>
         <span className="text-[11px] text-text-muted">Base {process.env.NEXT_PUBLIC_NETWORK === "base" ? "Mainnet" : "Sepolia"}</span>
       </div>
+
+      {txs.length === 0 ? (
+        <div className="px-4 py-8 text-center text-[12px] text-text-muted">
+          No transactions yet -- run a task to see live onchain activity here.
+        </div>
+      ) : null}
 
       <div className="divide-y divide-border-subtle">
         <AnimatePresence>

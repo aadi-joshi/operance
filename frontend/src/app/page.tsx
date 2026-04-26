@@ -231,7 +231,7 @@ export default function HomePage() {
             ))}
             {agents.length === 0 && (
               <div className="col-span-3 text-center py-16 text-text-muted text-[14px]">
-                No agents found. Start the backend to load agents.
+                No agents registered yet.
               </div>
             )}
           </div>

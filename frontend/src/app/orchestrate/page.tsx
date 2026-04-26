@@ -746,7 +746,7 @@ export default function OrchestratePage() {
                     >
                       <div>
                         <div className="text-[12px] font-medium text-text-primary">Shared pool</div>
-                        <div className="text-[11px] text-text-muted">Demo orchestrator funds</div>
+                        <div className="text-[11px] text-text-muted">Operance shared pool</div>
                       </div>
                       <span className="text-[11px] text-green font-mono font-semibold">Free</span>
                     </button>
@@ -770,15 +770,27 @@ export default function OrchestratePage() {
                         </div>
                         <div className="text-[11px] text-text-muted font-mono tabular-nums">
                           {usdcBalance.toFixed(2)} USDC available
-                          {!hasEnoughUsdc && " (need $0.033)"}
                         </div>
                       </div>
                       <span className="text-[11px] text-text-primary font-mono tabular-nums">$0.033</span>
                     </button>
                   </div>
-                  {paymentMode === "wallet" && (
+                  {!hasEnoughUsdc && (
                     <p className="text-[10px] text-text-muted mt-2 leading-relaxed">
-                      $0.033 USDC transfers from your wallet to the orchestrator before execution begins.
+                      Need testnet USDC?{" "}
+                      <a
+                        href="https://faucet.circle.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue hover:underline"
+                      >
+                        faucet.circle.com
+                      </a>
+                    </p>
+                  )}
+                  {paymentMode === "wallet" && hasEnoughUsdc && (
+                    <p className="text-[10px] text-text-muted mt-2 leading-relaxed">
+                      $0.033 USDC will transfer from your wallet to the orchestrator before execution begins. Every payment is an onchain Base transaction.
                     </p>
                   )}
                 </motion.div>
