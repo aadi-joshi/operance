@@ -177,8 +177,18 @@ export async function syncAgentsFromChain(): Promise<AgentCache[]> {
 
 export async function getAgents(): Promise<AgentCache[]> {
   const cached = store.getCachedAgents();
-  if (cached.length > 0) return cached;
-  return syncAgentsFromChain();
+  const agents = cached.length > 0 ? cached : await syncAgentsFromChain();
+
+  // Merge live per-agent stats from transaction log
+  const txs = store.getRecentTransactions(200);
+  return agents.map((agent) => {
+    const agentTxs = txs.filter((t) => t.agentId === agent.id);
+    const totalRequests = agentTxs.length;
+    const totalEarned = agentTxs
+      .reduce((sum, t) => sum + parseFloat(t.amountUsdc || "0"), 0)
+      .toFixed(6);
+    return { ...agent, totalRequests, totalEarned };
+  });
 }
 
 export async function getPlatformStats(): Promise<{
