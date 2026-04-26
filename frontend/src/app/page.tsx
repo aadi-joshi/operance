@@ -147,9 +147,9 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-2">
                   {[
-                    { agent: "DataFetcher", amount: "0.008", tx: "0x3f2a...cd4e", done: true },
-                    { agent: "RiskAnalyzer", amount: "0.015", tx: "0x8c1d...89bc", done: true },
-                    { agent: "ReportWriter", amount: "0.010", tx: "0xa9f3...45da", done: true },
+                    { agent: "DataFetcher", amount: "0.008", tx: "0xc798dd81...eeb6", href: "https://sepolia.basescan.org/tx/0xc798dd817f001fc69cd7e8e96c9469b06000d562ff397c7ee36a68d7e562eeb6" },
+                    { agent: "RiskAnalyzer", amount: "0.015", tx: "0xf7e605cf...93d5", href: "https://sepolia.basescan.org/tx/0xf7e605cfe7adddbfd7542b3c685c4d3ea5d7df381e8af08efdd38f6b9a2393d5" },
+                    { agent: "ReportWriter", amount: "0.010", tx: "0x61855239...d19c", href: "https://sepolia.basescan.org/tx/0x6185523911aa723c4ed9ab987e302bd1fab879cd0365f78b7cfede2bee99d19c" },
                   ].map((item, i) => (
                     <motion.div
                       key={i}
@@ -164,7 +164,7 @@ export default function HomePage() {
                       <span className="text-green font-semibold">{item.amount} USDC</span>
                       <span className="text-text-muted">[{item.tx}]</span>
                       <a
-                        href="https://sepolia.basescan.org"
+                        href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-light hover:underline text-[10px]"
