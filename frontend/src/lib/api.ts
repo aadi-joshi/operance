@@ -1,6 +1,9 @@
 import { Agent, PlatformStats, Transaction } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+// In production (Vercel HTTPS), use the /backend prefix which is rewritten to EC2 via next.config.js.
+// In local dev, NEXT_PUBLIC_BACKEND_URL=http://localhost:3001 from .env.local overrides this.
+const RAW = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BASE = RAW && RAW.startsWith("http") ? RAW : "/backend";
 
 export async function fetchAgents(): Promise<Agent[]> {
   const res = await fetch(`${BASE}/api/registry/agents`);
