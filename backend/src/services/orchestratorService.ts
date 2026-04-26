@@ -57,44 +57,52 @@ function sendEvent(res: Response, event: Record<string, any>) {
 }
 
 async function decomposeTask(task: string): Promise<SubTask[]> {
-  const prompt = `You are the Operance AI orchestrator. Given a user task, determine which specialized agents are needed.
+  // Always run all 3 agents in sequence - this is the core value prop of the platform
+  // GPT-4o generates tailored descriptions for each agent based on the task
+  const prompt = `You are the Operance AI orchestrator. Given a user task, write a specific instruction for each of the 3 agents below.
 
-Available agents:
+Agents (always use all 3 in this order):
 - DataFetcher (id=0): Fetches real-time DeFi protocol data, TVL, prices, onchain metrics
 - RiskAnalyzer (id=1): Analyzes smart contract and protocol risk for investment
 - ReportWriter (id=2): Writes professional investment reports and recommendations
 
 User task: "${task}"
 
-Determine the optimal sequence of agents needed. Most investment-related tasks need all three in order: 0, 1, 2.
-
-Return ONLY this JSON:
+Return ONLY this JSON with all 3 agents:
 {
   "subtasks": [
-    {
-      "agentId": 0,
-      "description": "What specifically to ask this agent"
-    }
+    { "agentId": 0, "description": "Specific data to fetch for this task" },
+    { "agentId": 1, "description": "Specific risk analysis to perform" },
+    { "agentId": 2, "description": "Specific report to write" }
   ]
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-    temperature: 0.1,
-  });
+  const defaultSubtasks = [
+    { agentId: 0 as AgentId, description: `Fetch real-time DeFi protocol data relevant to: ${task}` },
+    { agentId: 1 as AgentId, description: `Analyze risk profiles of the fetched protocols for: ${task}` },
+    { agentId: 2 as AgentId, description: `Write a professional investment report for: ${task}` },
+  ];
 
-  let agentIds: Array<{ agentId: AgentId; description: string }> = [];
-  try {
-    const parsed = JSON.parse(response.choices[0].message.content || "{}");
-    agentIds = parsed.subtasks || [];
-  } catch {
-    agentIds = [
-      { agentId: 0, description: "Fetch relevant protocol data" },
-      { agentId: 1, description: "Analyze risk profiles" },
-      { agentId: 2, description: "Write investment report" },
-    ];
+  let agentIds: Array<{ agentId: AgentId; description: string }> = defaultSubtasks;
+
+  if (config.openaiKey) {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      });
+      const parsed = JSON.parse(response.choices[0].message.content || "{}");
+      const subtasks = parsed.subtasks || [];
+      // Ensure all 3 agents are present; fall back to defaults for missing ones
+      agentIds = [0, 1, 2].map((id) => {
+        const found = subtasks.find((s: any) => s.agentId === id);
+        return found || defaultSubtasks[id];
+      });
+    } catch {
+      agentIds = defaultSubtasks;
+    }
   }
 
   return agentIds.map(({ agentId, description }) => {
