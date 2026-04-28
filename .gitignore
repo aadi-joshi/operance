@@ -12,7 +12,7 @@ coverage/
 Thumbs.db
 context/
 data/
-deployments/
+# deployments/ tracked intentionally - contract addresses are public
 cache/
 artifacts/
 typechain-types/
